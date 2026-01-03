@@ -1,2 +1,0 @@
-SimpleRule34
-__init__

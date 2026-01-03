@@ -1,11 +1,3 @@
-class ToBigRequestException(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
-
-
 class RequestMoreThanAvailableException(Exception):
     def __init__(self, msg, r_c, a_c):
         self.msg = msg
