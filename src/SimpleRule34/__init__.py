@@ -1,1 +1,1 @@
-from .Rule34 import Rule34Api
+from .main import Rule34Api
