@@ -1,6 +1,7 @@
 import os
 import typing
 import re
+import warnings
 
 from enum import Enum
 from pathlib import Path
@@ -23,9 +24,12 @@ class File(BaseModel):
 
         self.type = get_file_type(str(self.url))
 
-    async def download(self, path: Path | str = "./rule34_downloads") -> Path:
+    async def download(self, path: Path | str = "./rule34_downloads", file_name: Path | str = None) -> Path:
         if isinstance(path, str):
             path = Path(path)
+        if isinstance(file_name, str):
+            file_name = Path(file_name)
+
         # Create storage path
         path.mkdir(parents=True, exist_ok=True)
 
@@ -35,7 +39,11 @@ class File(BaseModel):
                     raise ApiException(f"Api returned status code {response.status} with message"
                                        f" {await response.text()}")
 
-                file_name = os.path.basename(str(self.url))
+                original_file_name = Path(os.path.basename(str(self.url)))
+                file_name = original_file_name if file_name is None else file_name
+                if file_name.suffix != original_file_name.suffix:
+                    warnings.warn("Provided file name suffix does not match original file name suffix. File can be corrupted.")
+
                 save_path = path / file_name
 
                 async with aiofiles.open(save_path, 'wb') as file:
