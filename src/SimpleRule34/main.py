@@ -17,7 +17,7 @@ class Rule34BaseApi:
             **kwargs,
         }
 
-    async def _get(self, json_: bool = True, **params) -> dict | str:
+    async def _get(self, json_: bool = True, **params) -> dict | str | None:
         """
         Raw request method
 
@@ -29,8 +29,10 @@ class Rule34BaseApi:
 
         async with aiohttp.ClientSession(headers=self._header) as session:
             async with session.get(self._url, params={**self._params, **params, 'json': json_parsed}) as response:
-                if not response.ok:
+                if not response.ok and response.status not in [404, ]:
                     raise ApiException(await response.text())
+                elif response.status == 404:
+                    return None
 
                 # Used for handling XML response
                 if not json_:
@@ -47,7 +49,7 @@ class Rule34PostApi(Rule34BaseApi):
         super().__init__(user_id, api_key, **kwargs)
         self._params['s'] = "post"
 
-    async def get(self, id: int) -> Rule34Post:
+    async def get(self, id: int) -> Rule34Post | None:
         """
         Method used to obtain a post by its ID
 
@@ -56,7 +58,7 @@ class Rule34PostApi(Rule34BaseApi):
         """
 
         post = await self._get(id=id)
-        return Rule34Post(**post[0])
+        return Rule34Post(**post[0]) if post else None
 
     async def get_count(self, tags: list[str] = None) -> int:
         """
@@ -96,6 +98,8 @@ class Rule34PostApi(Rule34BaseApi):
             raise ValueError(f"The max size of request is 1000 when you tried to request {amount}")
 
         raw_list = await self._get(limit=amount, pid=page, tags=" ".join(tags))
+        if raw_list is None: return []
+
         post_list = [Rule34Post(**data) for data in raw_list]
 
         # Fast return if not sort is needed
@@ -126,6 +130,8 @@ class Rule34CommentsApi(Rule34BaseApi):
         """
 
         xml_data = await self._get(post_id=post_id, json_=False)
+        if xml_data is None: return []
+
         xml_root = ET.fromstring(xml_data)
 
         return [Rule34Comment(**comment_e.attrib) for comment_e in xml_root.findall("comment")]
@@ -145,6 +151,8 @@ class Rule34TagsApi(Rule34BaseApi):
         """
 
         xml_data = await self._get(id=id, json_=False)
+        if xml_data is None: return None
+
         xml_root = ET.fromstring(xml_data)
 
         raw_tag_data = xml_root.find("tag")
@@ -162,6 +170,8 @@ class Rule34TagsApi(Rule34BaseApi):
         """
 
         xml_data = await self._get(json_=False, limit=amount, pid=page)
+        if xml_data is None: return []
+
         xml_root = ET.fromstring(xml_data)
 
         return [Rule34Tag(**tag_e.attrib) for tag_e in xml_root.findall("tag")]
