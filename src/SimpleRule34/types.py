@@ -24,7 +24,16 @@ class File(BaseModel):
 
         self.type = get_file_type(str(self.url))
 
-    async def download(self, path: Path | str = "./rule34_downloads", file_name: Path | str = None) -> Path:
+    async def download(self, path: Path | str = "./rule34_downloads", file_name: Path | str = None) -> Path | None:
+        """
+        Download a file to given path with given name
+
+        :param path: Path where file will be saved
+        :param file_name: Custom file name
+
+        :return: Path to downloaded file or None if file was not found
+        """
+
         if isinstance(path, str):
             path = Path(path)
         if isinstance(file_name, str):
@@ -35,9 +44,11 @@ class File(BaseModel):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(str(self.url)) as response:
-                if response.status != 200:
+                if response.status != 200 and response.status not in [404]:
                     raise ApiException(f"Api returned status code {response.status} with message"
                                        f" {await response.text()}")
+                elif response.status == 404:
+                    return None
 
                 original_file_name = Path(os.path.basename(str(self.url)))
                 file_name = original_file_name if file_name is None else file_name

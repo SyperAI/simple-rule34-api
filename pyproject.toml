@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "simple_rule34"
-version = "1.0.0.3"
+version = "1.0.0.4"
 authors = [
   { name="StarMan12", email="author@example.com" },
 ]
 description = "Simple api wrapper of rule34.xxx for python with asynchronous support"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
