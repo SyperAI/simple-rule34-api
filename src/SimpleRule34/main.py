@@ -73,6 +73,8 @@ class Rule34PostApi(Rule34BaseApi):
             tags = []
 
         xml_data = await self._get(json_=False, tags=" ".join(tags))
+        if xml_data is None: return 0
+
         xml_root = ET.fromstring(xml_data)
 
         return int(xml_root.get('count'))
