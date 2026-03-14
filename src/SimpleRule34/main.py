@@ -77,7 +77,7 @@ class Rule34PostApi(Rule34BaseApi):
 
         xml_root = ET.fromstring(xml_data)
 
-        return int(xml_root.get('count'))
+        return int(xml_root.get('count', default=0))
 
     async def get_list(self, amount: int = 1000, page: int = 0, tags: list[str] = None,
                        forbidden_tags: list[str] = None) -> list[Rule34Post]:
