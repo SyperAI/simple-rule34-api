@@ -102,7 +102,10 @@ class Rule34PostApi(Rule34BaseApi):
         raw_list = await self._get(limit=amount, pid=page, tags=" ".join(tags))
         if raw_list is None: return []
 
-        post_list = [Rule34Post(**data) for data in raw_list]
+        post_list = []
+        while raw_list:
+            post_list.append(Rule34Post(**raw_list.pop()))
+        post_list.reverse()
 
         # Fast return if not sort is needed
         if len(forbidden_tags) < 1:
