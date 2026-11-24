@@ -8,7 +8,7 @@ class Rule34BaseApi:
     _header = {'User-Agent': 'rule34-simple-api (Request)'}
     _url = f"https://api.rule34.xxx/index.php"
 
-    def __init__(self, user_id: int, api_key: str, **kwargs):
+    def __init__(self, user_id: int, api_key: str, _connector: aiohttp.TCPConnector = None, **kwargs):
         self._params = {
             'user_id': user_id,
             'api_key': api_key,
@@ -16,6 +16,8 @@ class Rule34BaseApi:
             'q': "index",
             **kwargs,
         }
+        self._connector = _connector if _connector else aiohttp.TCPConnector(limit=15)
+        self._session = aiohttp.ClientSession(headers=self._header, connector=self._connector)
 
     async def _get(self, json_: bool = True, **params) -> dict | str | None:
         """
@@ -27,10 +29,11 @@ class Rule34BaseApi:
         # API allow boolean values only in 0/1 format, so we need to convert default boolean to this format
         json_parsed = 1 if json_ else 0
 
-        async with aiohttp.ClientSession(headers=self._header) as session:
+        async with self._session as session:
             async with session.get(self._url, params={**self._params, **params, 'json': json_parsed}) as response:
                 if not response.ok and response.status not in [404, ]:
-                    raise ApiException(await response.text())
+                    error_text = await response.text()
+                    raise ApiException(error_text)
                 elif response.status == 404:
                     return None
 
@@ -41,7 +44,8 @@ class Rule34BaseApi:
                 try:
                     return await response.json()
                 except json.decoder.JSONDecodeError:
-                    raise ApiException(await response.text())
+                    error_text = await response.text()
+                    raise ApiException(error_text)
 
 
 class Rule34PostApi(Rule34BaseApi):
@@ -102,7 +106,10 @@ class Rule34PostApi(Rule34BaseApi):
         raw_list = await self._get(limit=amount, pid=page, tags=" ".join(tags))
         if raw_list is None: return []
 
-        post_list = [Rule34Post(**data) for data in raw_list]
+        post_list = []
+        while raw_list:
+            post_list.append(Rule34Post(**raw_list.pop()))
+        post_list.reverse()
 
         # Fast return if not sort is needed
         if len(forbidden_tags) < 1:

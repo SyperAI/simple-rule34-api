@@ -9,7 +9,7 @@ from pathlib import Path
 import aiofiles
 import aiohttp
 
-from pydantic import BaseModel, field_validator, HttpUrl, Field
+from pydantic import BaseModel, field_validator, HttpUrl, Field, ConfigDict
 
 from .exceptions import ApiException
 from .utils import get_file_type
@@ -64,6 +64,10 @@ class File(BaseModel):
 
 
 class Rule34Post(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+
     id: int
     owner: str | None
     status: str | None
@@ -105,9 +109,6 @@ class Rule34Post(BaseModel):
         if isinstance(v, (str, HttpUrl)):
             return File(url=v)
         return v
-
-    class Config:
-        populate_by_name = True
 
 
 class Rule34Comment(BaseModel):
