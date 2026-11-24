@@ -32,7 +32,8 @@ class Rule34BaseApi:
         async with self._session as session:
             async with session.get(self._url, params={**self._params, **params, 'json': json_parsed}) as response:
                 if not response.ok and response.status not in [404, ]:
-                    raise ApiException(await response.text())
+                    error_text = await response.text()
+                    raise ApiException(error_text)
                 elif response.status == 404:
                     return None
 
@@ -43,7 +44,8 @@ class Rule34BaseApi:
                 try:
                     return await response.json()
                 except json.decoder.JSONDecodeError:
-                    raise ApiException(await response.text())
+                    error_text = await response.text()
+                    raise ApiException(error_text)
 
 
 class Rule34PostApi(Rule34BaseApi):
